@@ -1,6 +1,13 @@
-use std::env;
-use git2::{Direction, Repository, RemoteCallbacks};
-// use std::process;
+use auth_git2::GitAuthenticator;
+use git2::{Direction, Error, RemoteCallbacks, Repository};
+
+pub fn log_level(verbose: u8) -> log::LevelFilter {
+    match verbose {
+        0 => log::LevelFilter::Info,
+        1 => log::LevelFilter::Debug,
+        2.. => log::LevelFilter::Trace,
+    }
+}
 
 /// Do the equivalent of `git remote show origin | grep HEAD | awk '{print $3}'`
 pub fn get_default_branch() -> String {
@@ -25,83 +32,38 @@ pub fn get_default_branch() -> String {
     output.to_string()
 }
 
-// pub fn git_credentials_callback(
-//     _user: &str,
-//     _user_from_url: Option<&str>,
-//     _cred: git2::CredentialType,
-// ) -> Result<git2::Cred, git2::Error> {
-//     match env::var("GPM_SSH_KEY") {
-//         Ok(k) => {
-//             // debug!("authenticate with private key located in {}", k);
-//             git2::Cred::ssh_key("git", None, std::path::Path::new(&k), None)
-//         },
-//         _ => Err(git2::Error::from_str("unable to get private key from GPM_SSH_KEY")),
-//     }
-// }
+/// Do the equivalent of `git remote show origin | grep HEAD | awk '{print $3}'`
+pub fn default_branch() -> Result<String, Error> {
+    let repo_root = std::env::args().nth(1).unwrap_or(".".to_string());
+    let repo = Repository::open(repo_root.as_str()).expect("Couldn't open repository");
+    let mut remote = repo
+        .find_remote("origin")
+        .expect("Couldn't find remote 'origin'");
+    let authenticator = GitAuthenticator::default();
+    let git_config = git2::Config::open_default().unwrap();
+    let mut callbacks = RemoteCallbacks::new();
 
-pub fn git_credentials_callback(
-    _user: &str,
-    _user_from_url: Option<&str>,
-    _cred: git2::CredentialType,
-) -> Result<git2::Cred, git2::Error> {
-    let user = _user_from_url.unwrap_or("git");
+    callbacks.credentials(authenticator.credentials(&git_config));
 
-    if _cred.contains(git2::CredentialType::USERNAME) {
-        return git2::Cred::username(user);
-    }
+    // let connection = remote
+    //     .connect_auth(Direction::Fetch, Some(callbacks), None)
+    //     .expect("Couldn't connect to remote");
 
-    match env::var("GPM_SSH_KEY") {
-        Ok(k) => {
-            // debug!("authenticate with user {} and private key located in {}", user, k);
-            git2::Cred::ssh_key(user, None, std::path::Path::new(&k), None)
-        },
-        _ => Err(git2::Error::from_str("unable to get private key from GPM_SSH_KEY")),
-    }
-}
-
-pub fn get_default_branch2() -> Result<String, git2::Error> {
-    // let repo = match git2::Repository::open(".") {
-    //     Ok(repo) => repo,
-    //     Err(e) => {
-    //         eprintln!("failed: {}", e.message());
-    //         process::exit(1)
-    //     }
-    // };
-    //
-    // let mut remote = match repo.find_remote("origin") {
-    //     Ok(remote) => remote,
-    //     Err(e) => {
-    //         eprintln!("failed: {}", e.message());
-    //         process::exit(1)
-    //     }
-    // };
-    //
-    // match remote.connect(git2::Direction::Fetch) {
-    //     Ok(_) => {
-    //         let head = remote.default_branch().unwrap();
-    //         head.as_str().unwrap().to_string()
-    //     }
-    //     Err(e) => {
-    //         eprintln!("failed: {}", e.message());
-    //         process::exit(1)
-    //     }
+    // for head in connection.list()?.iter() {
+    //     debug!("{}\t{}", head.oid(), head.name());
     // }
 
-    let mut callbacks = RemoteCallbacks::new();
-    callbacks.credentials(git_credentials_callback);
-    let repo = Repository::open(".")?;
-    let remote = "origin";
-    let mut remote = repo
-        .find_remote(remote)
-        .or_else(|_| repo.remote_anonymous(remote))?;
+    let result = match remote.connect_auth(Direction::Fetch, Some(callbacks), None) {
+        Ok(connection) => {
+            // let head = remote.default_branch().unwrap();
+            // Ok(head.as_str().unwrap().to_string())
+            let head = connection.default_branch().unwrap();
+            Ok(head.as_str().unwrap().to_string())
+        }
+        Err(e) => Err(e)
+    };
 
-    let connection = remote.connect_auth(Direction::Fetch, Some(callbacks), None)?;
-
-    for head in connection.list()?.iter() {
-        println!("{}\t{}", head.oid(), head.name());
-    }
-
-    Ok("test".to_string())
+    result
 }
 
 #[cfg(test)]
