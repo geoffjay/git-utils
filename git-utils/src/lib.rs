@@ -32,12 +32,10 @@ pub fn log_prepare(path: &str, command_name: &str) {
 
 impl Command {
     pub fn new(name: String) -> Command {
-        let root = std::env::args().nth(1).unwrap_or(".".to_string());
-
         Command {
             config: Config::open_default().unwrap(),
             name,
-            repo: Repository::open(root.as_str()).expect("Couldn't open repository"),
+            repo: Repository::open_from_env().expect("Couldn't open repository"),
         }
     }
 
@@ -79,5 +77,18 @@ impl Command {
             Ok(branch) => Ok(branch),
             Err(CommandError::GitError(e)) => Err(e),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_default_branch() {
+        let command = Command::new("git-default-branch".to_string());
+
+        let branch = command.default_branch().unwrap();
+        assert_eq!(branch, "main");
     }
 }
