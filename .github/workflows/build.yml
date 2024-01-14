@@ -48,6 +48,7 @@ jobs:
           strip target/release/git-default-branch
           tar -czvf target/release/${{ matrix.asset_name }} \
             target/release/git-default-branch
+        if: matrix.os != 'windows-latest'
 
       - name: Build (windows)
         run: |
@@ -55,6 +56,7 @@ jobs:
           anonlink
           cargo +nightly build --verbose --release
           Compress-Archive -Path target/release/git-*.exe -Destination ${{ matrix.asset_name }}
+        if: matrix.os == 'windows-latest'
 
       - name: Publish binaries
         uses: svenstaro/upload-release-action@v2
