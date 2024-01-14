@@ -60,6 +60,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "git-current-branch"
+version = "0.1.0"
+dependencies = [
+ "env_logger",
+ "git-utils",
+ "git2",
+ "log",
+]
+
+[[package]]
 name = "git-default-branch"
 version = "0.1.0"
 dependencies = [

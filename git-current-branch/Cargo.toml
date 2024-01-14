@@ -1,5 +1,5 @@
 [package]
-name = "git-default-branch"
+name = "git-current-branch"
 version.workspace = true
 authors.workspace = true
 edition.workspace = true

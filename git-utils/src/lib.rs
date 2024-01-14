@@ -78,6 +78,14 @@ impl Command {
             Err(CommandError::GitError(e)) => Err(e),
         }
     }
+
+    /// Retrive the name of the current branch for the repository. This does the rough
+    /// equivalent of `git rev-parse --abbrev-ref HEAD`
+    pub fn current_branch(self: Command) -> Result<String, Error> {
+        let head = self.repo.head().unwrap();
+        let branch = head.shorthand().unwrap();
+        Ok(branch.to_string())
+    }
 }
 
 #[cfg(test)]

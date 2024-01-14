@@ -1,9 +1,15 @@
 [workspace]
 members = [
   "git-utils",
+  "git-current-branch",
   "git-default-branch",
 ]
 resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+authors = ["Geoff Johnson <geoff.jay@gmail.com>"]
+edition = "2021"
 
 [workspace.dependencies]
 env_logger = "0.10"
