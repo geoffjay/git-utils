@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-auth-git2 = { workspace = true }
 env_logger = { workspace = true }
 git2 = { workspace = true }
 log = { workspace = true }

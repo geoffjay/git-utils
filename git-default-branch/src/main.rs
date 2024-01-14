@@ -6,7 +6,7 @@ fn main() {
     log_prepare(module_path!(), "git-default-branch");
     let command = Command::new("git-default-branch".to_string());
 
-    match command.default_branch_auth() {
+    match command.default_branch() {
         Ok(branch) => println!("{}", branch),
         Err(e) => {
             error!("error: {}", e);
