@@ -34,7 +34,7 @@ jobs:
         if: matrix.os == 'macos-latest'
 
       - name: Build
-        run:
+        run: |
           cargo build --verbose --release
           strip target/release/git-default-branch
 
