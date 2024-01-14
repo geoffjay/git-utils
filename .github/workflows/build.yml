@@ -37,15 +37,13 @@ jobs:
         run: |
           cargo build --verbose --release
           strip target/release/git-default-branch
+          mv target/release/git-default-branch target/release/git-default-branch-${{ matrix.os }}
 
-      - name: Check
-        run: ls -alh target/release
-
-      # - name: Publish binaries
-      #   uses: svenstaro/upload-release-action@v2
-      #   with:
-      #     repo_token: ${{ secrets.GITHUB_TOKEN }}
-      #     file: target/release/git-*
-      #     tag: ${{ github.ref }}
-      #     overwrite: true
-      #     file_glob: true
+      - name: Publish binaries
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/git-*-${{ matrix.os }}
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
