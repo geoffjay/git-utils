@@ -16,11 +16,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            asset_name: git-utils-${{ github.ref_name }}-linux-amd64.tar.gz
+            asset_name: git-utils-${{ github.ref_name }}-linux-x86_64.tar.gz
           - os: macos-latest
-            asset_name: git-utils-${{ github.ref_name }}-darwin-amd64.tar.gz
+            asset_name: git-utils-${{ github.ref_name }}-darwin-x86_64.tar.gz
           - os: windows-latest
-            asset_name: git-utils-${{ github.ref_name }}-windows-amd64.zip
+            asset_name: git-utils-${{ github.ref_name }}-windows-x86_64.zip
 
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +30,7 @@ jobs:
           path: ~/.cargo
           key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
 
-      - name: Install Rust (rustup)
+      - name: Install Rust (linux)
         run: |
           rustup update stable
           rustup default stable
@@ -42,19 +42,25 @@ jobs:
           echo "{:$HOME/.cargo/bin}" >> $GITHUB_PATH
         if: matrix.os == 'macos-latest'
 
+      - name: Install Nightly (windows)
+        run: |
+          rustup toolchain install nightly
+        if: matrix.os == 'windows-latest'
+
       - name: Build
         run: |
           cargo build --verbose --release
           strip target/release/git-default-branch
-          tar -czvf target/release/${{ matrix.asset_name }} \
-            target/release/git-default-branch
+          tar -czvf ${{ matrix.asset_name }} -C target/release \
+            git-current-branch \
+            git-default-branch
         if: matrix.os != 'windows-latest'
 
       - name: Build (windows)
         run: |
-          cargo install anonlink
+          cargo +nightly install anonlink
           anonlink
-          cargo build --verbose --release
+          cargo +nightly build --verbose --release
           Compress-Archive -Path target/release/git-*.exe -Destination ${{ matrix.asset_name }}
         if: matrix.os == 'windows-latest'
 
