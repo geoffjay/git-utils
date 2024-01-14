@@ -1,0 +1,33 @@
+name: Build
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      TZ: America/Vancouver
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/cache@main
+        with:
+          path: ~/.cargo
+          key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
+      - name: Install Rust (rustup)
+        run: |
+          rustup update stable
+          rustup default stable
+        if: matrix.os != 'macos-latest'
+      - name: Install Rust (macos)
+        run: |
+          curl https://sh.rustup.rs | sh -s -- -y
+          echo "##[add-path]$HOME/.cargo/bin"
+        if: matrix.os == 'macos-latest'
+      - run: cargo build --verbose --release
+      - uses: actions/upload-artifact@main
+        with:
+          name: GitUtils-${{ matrix.os }}
+          path: target/release/

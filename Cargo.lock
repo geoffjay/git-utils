@@ -130,6 +130,7 @@ name = "git-utils"
 version = "0.1.0"
 dependencies = [
  "auth-git2",
+ "env_logger",
  "git2",
  "log",
 ]
