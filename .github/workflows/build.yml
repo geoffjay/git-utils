@@ -1,9 +1,14 @@
-name: Build
+name: cargo build
 
-on: [push]
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**/*.rs"
 
 jobs:
   build:
+    name: cargo build
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -11,22 +16,27 @@ jobs:
     env:
       TZ: America/Vancouver
     steps:
-      - uses: actions/checkout@main
-      - uses: actions/cache@main
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache@v3
         with:
           path: ~/.cargo
           key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
+
       - name: Install Rust (rustup)
         run: |
           rustup update stable
           rustup default stable
         if: matrix.os != 'macos-latest'
+
       - name: Install Rust (macos)
         run: |
           curl https://sh.rustup.rs | sh -s -- -y
-          echo "##[add-path]$HOME/.cargo/bin"
+          echo "{:$HOME/.cargo/bin}" >> $GITHUB_PATH
         if: matrix.os == 'macos-latest'
+
       - run: cargo build --verbose --release
+
       - uses: actions/upload-artifact@main
         with:
           name: GitUtils-${{ matrix.os }}
