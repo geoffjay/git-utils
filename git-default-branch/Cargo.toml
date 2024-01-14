@@ -3,14 +3,8 @@ name = "git-default-branch"
 version = "0.1.0"
 edition = "2021"
 
-[profile.release]
-opt-level = 3
-debug = false
-lto = true
-panic = "abort"
-
 [dependencies]
-env_logger = { workspace = true }
 git-utils = { path = "../git-utils" }
-git2 = { workspace = true }
-log = { workspace = true }   
+env_logger.workspace = true
+git2.workspace = true
+log.workspace = true

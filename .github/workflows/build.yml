@@ -2,9 +2,8 @@ name: cargo build
 
 on:
   push:
-    branches: [main]
-    paths:
-      - "**/*.rs"
+    tags:
+      - '*'
 
 jobs:
   build:
@@ -13,8 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-    env:
-      TZ: America/Vancouver
+
     steps:
       - uses: actions/checkout@v4
 
@@ -35,9 +33,16 @@ jobs:
           echo "{:$HOME/.cargo/bin}" >> $GITHUB_PATH
         if: matrix.os == 'macos-latest'
 
-      - run: cargo build --verbose --release
+      - name: Build
+        run:
+          cargo build --verbose --release
+          strip target/release/git-default-branch
 
-      - uses: actions/upload-artifact@main
+      - name: Publish binaries
+        uses: svenstaro/upload-release-action@v2
         with:
-          name: GitUtils-${{ matrix.os }}
-          path: target/release/
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: target/release/git-*
+          tag: ${{ github.ref }}
+          overwrite: true
+          file_glob: true
