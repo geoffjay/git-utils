@@ -51,6 +51,7 @@ jobs:
         run: |
           cargo build --verbose --release
           strip target/release/git-default-branch
+          strip target/release/git-current-branch
           tar -czvf ${{ matrix.asset_name }} -C target/release \
             git-current-branch \
             git-default-branch
@@ -68,7 +69,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: target/release/${{ matrix.asset_name }}
+          file: ${{ matrix.asset_name }}
           asset_name: ${{ matrix.asset_name }}
           tag: ${{ github.ref }}
           overwrite: true
