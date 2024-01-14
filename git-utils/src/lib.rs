@@ -44,7 +44,8 @@ impl Command {
     /// Retrieve the name of the default branch from the remote. This does the rough
     /// equivalent of `git remote show origin | grep HEAD | awk '{print $3}'`
     pub fn default_branch(self: Command) -> Result<String, Error> {
-        let mut remote = self.repo
+        let mut remote = self
+            .repo
             .find_remote("origin")
             .expect("Couldn't find remote 'origin'");
         let r = remote.clone();
@@ -68,7 +69,7 @@ impl Command {
                     let branch = head.as_str().unwrap().strip_prefix("refs/heads/").unwrap();
                     Ok(branch.to_string())
                 }
-                Err(e) => Err(CommandError::GitError(e))
+                Err(e) => Err(CommandError::GitError(e)),
             }
         });
 
@@ -76,7 +77,7 @@ impl Command {
         // type with `Result<String, CommandError>`
         match result {
             Ok(branch) => Ok(branch),
-            Err(CommandError::GitError(e)) => Err(e)
+            Err(CommandError::GitError(e)) => Err(e),
         }
     }
 }

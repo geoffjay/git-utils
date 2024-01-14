@@ -11,7 +11,7 @@ fn main() {
         Err(e) => {
             error!("error: {}", e);
             std::process::exit(1);
-        },
+        }
     }
 
     debug!("git default-branch completed successfully");
