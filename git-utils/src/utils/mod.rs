@@ -2,7 +2,8 @@ use std::env;
 
 use crate::errors::CommandError;
 
-/// Taken from: https://github.com/rust-lang/cargo/blob/a41c8eae701c33abd327d13ff5c057389d8801b9/src/cargo/sources/git/utils.rs#L410-L624
+/// Taken and modified from:
+/// https://github.com/rust-lang/cargo/blob/a41c8eae701c33abd327d13ff5c057389d8801b9/src/cargo/sources/git/utils.rs#L410-L624
 ///
 /// I stripped out all of the comments, if you want to see those look at the original source.
 pub fn with_authentication<T, F>(url: &str, cfg: &git2::Config, mut f: F) -> Result<T, CommandError>
