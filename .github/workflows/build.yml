@@ -21,7 +21,7 @@ jobs:
           - os: macos-latest
             arch: x86_64
             asset_name: git-utils-${{ github.ref_name }}-darwin-x86_64.tar.gz
-          - os: macos-latest
+          - os: ubuntu-latest
             arch: aarch64
             asset_name: git-utils-${{ github.ref_name }}-darwin-aarch64.tar.gz
           - os: windows-latest
@@ -46,7 +46,6 @@ jobs:
         run: |
           curl https://sh.rustup.rs | sh -s -- -y
           echo "{:$HOME/.cargo/bin}" >> $GITHUB_PATH
-          rustup target add aarch64-apple-darwin
 
       - name: Install Rust (windows)
         if: matrix.os == 'windows-latest'
@@ -58,10 +57,10 @@ jobs:
       - name: Build
         if: matrix.os != 'windows-latest'
         run: |
-          if [[ ${{ matrix.os }} == 'macos-latest' && ${{ matrix.arch }} == 'aarch64' ]]; then
-            SDKROOT=$(xcrun -sdk macosx --show-sdk-path) \
-            MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx --show-sdk-platform-version) \
-              cargo build --verbose --release --target aarch64-apple-darwin
+          if [[ ${{ matrix.os }} == 'ubuntu-latest' && ${{ matrix.arch }} == 'aarch64' ]]; then
+            apt-get install libssl-dev
+            rustup target add aarch64-apple-darwin
+            cargo build --verbose --release --target aarch64-apple-darwin
           else
             cargo build --verbose --release
           fi
