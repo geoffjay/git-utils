@@ -59,7 +59,9 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           if [[ ${{ matrix.os }} == 'macos-latest' && ${{ matrix.arch }} == 'aarch64' ]]; then
-            cargo build --verbose --release --target aarch64-apple-darwin
+            SDKROOT=$(xcrun -sdk macosx11.1 --show-sdk-path) \
+            MACOSX_DEPLOYMENT_TARGET=$(xcrun -sdk macosx11.1 --show-sdk-platform-version) \
+              cargo build --verbose --release --target aarch64-apple-darwin
           else
             cargo build --verbose --release
           fi
