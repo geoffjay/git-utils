@@ -16,14 +16,9 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            arch: x86_64
             asset_name: git-utils-${{ github.ref_name }}-linux-x86_64.tar.gz
           - os: macos-latest
-            arch: x86_64
             asset_name: git-utils-${{ github.ref_name }}-darwin-x86_64.tar.gz
-          - os: ubuntu-latest
-            arch: aarch64
-            asset_name: git-utils-${{ github.ref_name }}-darwin-aarch64.tar.gz
           - os: windows-latest
             asset_name: git-utils-${{ github.ref_name }}-windows-x86_64.zip
 
@@ -57,13 +52,7 @@ jobs:
       - name: Build
         if: matrix.os != 'windows-latest'
         run: |
-          if [[ ${{ matrix.os }} == 'ubuntu-latest' && ${{ matrix.arch }} == 'aarch64' ]]; then
-            sudo apt-get install libssl-dev pkg-config
-            rustup target add aarch64-apple-darwin
-            cargo build --verbose --release --target aarch64-apple-darwin
-          else
-            cargo build --verbose --release
-          fi
+          cargo build --verbose --release
           strip target/release/git-default-branch
           strip target/release/git-current-branch
           tar -czvf ${{ matrix.asset_name }} -C target/release \
