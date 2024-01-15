@@ -16,9 +16,14 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
+            arch: x86_64
             asset_name: git-utils-${{ github.ref_name }}-linux-x86_64.tar.gz
           - os: macos-latest
+            arch: x86_64
             asset_name: git-utils-${{ github.ref_name }}-darwin-x86_64.tar.gz
+          - os: macos-latest
+            arch: aarch64
+            asset_name: git-utils-${{ github.ref_name }}-darwin-aarch64.tar.gz
           - os: windows-latest
             asset_name: git-utils-${{ github.ref_name }}-windows-x86_64.zip
 
@@ -31,39 +36,46 @@ jobs:
           key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Install Rust (linux)
+        if: matrix.os == 'linux-latest'
         run: |
           rustup update stable
           rustup default stable
-        if: matrix.os != 'macos-latest'
 
       - name: Install Rust (macos)
+        if: matrix.os == 'macos-latest'
         run: |
           curl https://sh.rustup.rs | sh -s -- -y
           echo "{:$HOME/.cargo/bin}" >> $GITHUB_PATH
-        if: matrix.os == 'macos-latest'
+          rustup target add aarch64-apple-darwin
 
-      - name: Install Nightly (windows)
-        run: |
-          rustup toolchain install nightly
+      - name: Install Rust (windows)
         if: matrix.os == 'windows-latest'
+        run: |
+          rustup update stable
+          rustup default stable
+          rustup toolchain install nightly
 
       - name: Build
+        if: matrix.os != 'windows-latest'
         run: |
-          cargo build --verbose --release
+          if [[ ${{ matrix.os }} == 'macos-latest' && ${{ matrix.arch }} == 'aarch64' ]]; then
+            cargo build --verbose --release --target aarch64-apple-darwin
+          else
+            cargo build --verbose --release
+          fi
           strip target/release/git-default-branch
           strip target/release/git-current-branch
           tar -czvf ${{ matrix.asset_name }} -C target/release \
             git-current-branch \
             git-default-branch
-        if: matrix.os != 'windows-latest'
 
       - name: Build (windows)
+        if: matrix.os == 'windows-latest'
         run: |
           cargo +nightly install anonlink
           anonlink
           cargo +nightly build --verbose --release
           Compress-Archive -Path target/release/git-*.exe -Destination ${{ matrix.asset_name }}
-        if: matrix.os == 'windows-latest'
 
       - name: Publish binaries
         uses: svenstaro/upload-release-action@v2
