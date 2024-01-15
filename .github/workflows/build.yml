@@ -58,7 +58,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           if [[ ${{ matrix.os }} == 'ubuntu-latest' && ${{ matrix.arch }} == 'aarch64' ]]; then
-            sudo apt-get install libssl-dev
+            sudo apt-get install libssl-dev pkg-config
             rustup target add aarch64-apple-darwin
             cargo build --verbose --release --target aarch64-apple-darwin
           else
