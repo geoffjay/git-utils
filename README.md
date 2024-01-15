@@ -6,6 +6,10 @@
 
 Some personal `git` commands that have been adapted from aliases.
 
+## `git-current-branch`
+
+Prints the current branch for a local repository.
+
 ## `git-default-branch`
 
 Prints the default branch, eg. `main` or `master`, for a repository.
