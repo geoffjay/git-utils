@@ -4,8 +4,6 @@ use crate::errors::CommandError;
 
 /// Taken and modified from:
 /// https://github.com/rust-lang/cargo/blob/a41c8eae701c33abd327d13ff5c057389d8801b9/src/cargo/sources/git/utils.rs#L410-L624
-///
-/// I stripped out all of the comments, if you want to see those look at the original source.
 pub fn with_authentication<T, F>(url: &str, cfg: &git2::Config, mut f: F) -> Result<T, CommandError>
 where
     F: FnMut(&mut git2::Credentials<'_>) -> Result<T, CommandError>,
@@ -89,4 +87,23 @@ where
     }
 
     res
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_with_authentication() {
+        let url = "";
+        let cfg = git2::Config::new().unwrap();
+        let result = with_authentication(url, &cfg, |f| {
+            let mut callbacks = git2::RemoteCallbacks::new();
+            callbacks.credentials(f);
+
+            Ok(())
+        });
+
+        assert!(result.is_ok());
+    }
 }

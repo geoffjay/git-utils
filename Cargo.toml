@@ -3,6 +3,8 @@ members = [
   "git-utils",
   "git-current-branch",
   "git-default-branch",
+  "git-repo-title",
+  "git-repo-url",
 ]
 resolver = "2"
 

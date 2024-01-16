@@ -61,7 +61,7 @@ dependencies = [
 
 [[package]]
 name = "git-current-branch"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "env_logger",
  "git-utils",
@@ -71,7 +71,27 @@ dependencies = [
 
 [[package]]
 name = "git-default-branch"
-version = "0.1.0"
+version = "0.1.1"
+dependencies = [
+ "env_logger",
+ "git-utils",
+ "git2",
+ "log",
+]
+
+[[package]]
+name = "git-repo-title"
+version = "0.1.1"
+dependencies = [
+ "env_logger",
+ "git-utils",
+ "git2",
+ "log",
+]
+
+[[package]]
+name = "git-repo-url"
+version = "0.1.1"
 dependencies = [
  "env_logger",
  "git-utils",
@@ -86,6 +106,7 @@ dependencies = [
  "env_logger",
  "git2",
  "log",
+ "regex",
 ]
 
 [[package]]

@@ -7,3 +7,4 @@ edition = "2021"
 env_logger.workspace = true
 git2.workspace = true
 log.workspace = true
+regex = "1.10"

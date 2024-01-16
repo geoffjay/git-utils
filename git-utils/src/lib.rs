@@ -1,4 +1,5 @@
 use git2::{Config, Direction, Error, ProxyOptions, RemoteCallbacks, Repository};
+use regex::Regex;
 
 mod errors;
 mod utils;
@@ -39,7 +40,7 @@ impl Command {
         }
     }
 
-    /// Retrieve the name of the default branch from the remote. This does the rough
+    /// Retrieve the name of the default branch from the remote. This does the
     /// equivalent of `git remote show origin | grep HEAD | awk '{print $3}'`
     pub fn default_branch(self: Command) -> Result<String, Error> {
         let mut remote = self
@@ -54,7 +55,6 @@ impl Command {
             let mut proxy_options = ProxyOptions::new();
             proxy_options.auto();
 
-            // let callbacks = agent_callbacks();
             let mut callbacks = RemoteCallbacks::new();
             callbacks.credentials(f);
 
@@ -79,12 +79,75 @@ impl Command {
         }
     }
 
-    /// Retrive the name of the current branch for the repository. This does the rough
+    /// Retrive the name of the current branch for the repository. This does the
     /// equivalent of `git rev-parse --abbrev-ref HEAD`
     pub fn current_branch(self: Command) -> Result<String, Error> {
         let head = self.repo.head().unwrap();
         let branch = head.shorthand().unwrap();
         Ok(branch.to_string())
+    }
+
+    /// Print the name of the repository. This does the rough equivalent of
+    /// `git remote show origin | grep Fetch | awk '{print $3}'`
+    pub fn repo_url(self: Command) -> Result<String, Error> {
+        let mut remote = self
+            .repo
+            .find_remote("origin")
+            .expect("Couldn't find remote 'origin'");
+        let r = remote.clone();
+        let url = r.url().unwrap();
+        let config = &self.config;
+
+        let result = with_authentication(url, config, |f| {
+            let mut proxy_options = ProxyOptions::new();
+            proxy_options.auto();
+
+            let mut callbacks = RemoteCallbacks::new();
+            callbacks.credentials(f);
+
+            let _ = remote
+                .connect_auth(Direction::Fetch, Some(callbacks), Some(proxy_options))
+                .map_err(CommandError::GitError);
+
+            match remote.url() {
+                Some(url) => Ok(url.to_string()),
+                None => Err(CommandError::GitError(Error::from_str(
+                    "Couldn't find remote 'origin'",
+                ))),
+            }
+        });
+
+        match result {
+            Ok(name) => Ok(name),
+            Err(CommandError::GitError(e)) => Err(e),
+        }
+    }
+
+    /// Print the owner and name of the repository. This does the equivalent of
+    /// `git remote show origin | grep Fetch | sed "s/^.*\:\(.*\)\.git/\1/"`
+    ///
+    // This should support both ssh and https urls:
+    //
+    // let url = "git@github.com:geoffjay/git-utils.git".to_string();
+    // let url = "https://github.com/geoffjay/git-utils.git".to_string();
+    //
+    // at some point adding a mocking library should be done to test each.
+    pub fn repo_title(self: Command) -> Result<String, Error> {
+        let url = self.repo_url()?;
+
+        // match the owner and repository name from the url
+        let re = Regex::new(r"(?x)
+            ^((https://)|(git@))
+            ([\w\.]*)
+            ([:\/])
+            (?P<owner>[\w\-_\.]*)
+            \/
+            (?P<name>[\w\-_\.]*)
+            (\.git)$
+        ").unwrap();
+        let res = re.replace_all(&url, "$owner/$name");
+
+        Ok(res.to_string())
     }
 }
 
@@ -95,8 +158,32 @@ mod tests {
     #[test]
     fn test_default_branch() {
         let command = Command::new("git-default-branch".to_string());
-
         let branch = command.default_branch().unwrap();
+
         assert_eq!(branch, "main");
+    }
+
+    #[test]
+    fn test_current_branch() {
+        let command = Command::new("git-current-branch".to_string());
+        let branch = command.current_branch().unwrap();
+
+        assert_eq!(branch, "main");
+    }
+
+    #[test]
+    fn test_repo_url() {
+        let command = Command::new("git-repo-url".to_string());
+        let url = command.repo_url().unwrap();
+
+        assert_eq!(url, "git@github.com:geoffjay/git-utils.git");
+    }
+
+    #[test]
+    fn test_repo_title() {
+        let command = Command::new("git-repo-title".to_string());
+        let title = command.repo_title().unwrap();
+
+        assert_eq!(title, "geoffjay/git-utils");
     }
 }
