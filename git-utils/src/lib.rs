@@ -87,7 +87,7 @@ impl Command {
         Ok(branch.to_string())
     }
 
-    /// Print the name of the repository. This does the rough equivalent of
+    /// Print the name of the repository. This does the equivalent of
     /// `git remote show origin | grep Fetch | awk '{print $3}'`
     pub fn repo_url(self: Command) -> Result<String, Error> {
         let mut remote = self
@@ -123,6 +123,17 @@ impl Command {
         }
     }
 
+    /// Print the url of the repository using local config. This does the equivalent of
+    /// `git config --get remote.origin.url`
+    pub fn repo_url2(self: Command) -> Result<String, Error> {
+        let url = self
+            .config
+            .get_string("remote.origin.url")
+            .expect("Invalid key: 'remote.origin.url'");
+
+        Ok(url)
+    }
+
     /// Print the owner and name of the repository. This does the equivalent of
     /// `git remote show origin | grep Fetch | sed "s/^.*\:\(.*\)\.git/\1/"`
     ///
@@ -133,10 +144,11 @@ impl Command {
     //
     // at some point adding a mocking library should be done to test each.
     pub fn repo_title(self: Command) -> Result<String, Error> {
-        let url = self.repo_url()?;
+        let url = self.repo_url2()?;
 
         // match the owner and repository name from the url
-        let re = Regex::new(r"(?x)
+        let re = Regex::new(
+            r"(?x)
             ^((https://)|(git@))
             ([\w\.]*)
             ([:\/])
@@ -144,7 +156,9 @@ impl Command {
             \/
             (?P<name>[\w\-_\.]*)
             (\.git)$
-        ").unwrap();
+        ",
+        )
+        .unwrap();
         let res = re.replace_all(&url, "$owner/$name");
 
         Ok(res.to_string())
