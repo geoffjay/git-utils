@@ -87,47 +87,13 @@ impl Command {
         Ok(branch.to_string())
     }
 
-    /// Print the name of the repository. This does the equivalent of
-    /// `git remote show origin | grep Fetch | awk '{print $3}'`
-    pub fn repo_url(self: Command) -> Result<String, Error> {
-        let mut remote = self
-            .repo
-            .find_remote("origin")
-            .expect("Couldn't find remote 'origin'");
-        let r = remote.clone();
-        let url = r.url().unwrap();
-        let config = &self.config;
-
-        let result = with_authentication(url, config, |f| {
-            let mut proxy_options = ProxyOptions::new();
-            proxy_options.auto();
-
-            let mut callbacks = RemoteCallbacks::new();
-            callbacks.credentials(f);
-
-            let _ = remote
-                .connect_auth(Direction::Fetch, Some(callbacks), Some(proxy_options))
-                .map_err(CommandError::GitError);
-
-            match remote.url() {
-                Some(url) => Ok(url.to_string()),
-                None => Err(CommandError::GitError(Error::from_str(
-                    "Couldn't find remote 'origin'",
-                ))),
-            }
-        });
-
-        match result {
-            Ok(name) => Ok(name),
-            Err(CommandError::GitError(e)) => Err(e),
-        }
-    }
-
     /// Print the url of the repository using local config. This does the equivalent of
     /// `git config --get remote.origin.url`
-    pub fn repo_url2(self: Command) -> Result<String, Error> {
+    pub fn repo_url(self: Command) -> Result<String, Error> {
         let url = self
-            .config
+            .repo
+            .config()
+            .unwrap()
             .get_string("remote.origin.url")
             .expect("Invalid key: 'remote.origin.url'");
 
@@ -144,7 +110,7 @@ impl Command {
     //
     // at some point adding a mocking library should be done to test each.
     pub fn repo_title(self: Command) -> Result<String, Error> {
-        let url = self.repo_url2()?;
+        let url = self.repo_url()?;
 
         // match the owner and repository name from the url
         let re = Regex::new(
