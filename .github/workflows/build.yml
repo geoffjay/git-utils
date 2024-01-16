@@ -55,9 +55,13 @@ jobs:
           cargo build --verbose --release
           strip target/release/git-default-branch
           strip target/release/git-current-branch
+          strip target/release/git-repo-title
+          strip target/release/git-repo-url
           tar -czvf ${{ matrix.asset_name }} -C target/release \
             git-current-branch \
-            git-default-branch
+            git-default-branch \
+            git-repo-title \
+            git-repo-url
 
       - name: Build (windows)
         if: matrix.os == 'windows-latest'
