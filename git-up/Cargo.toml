@@ -1,0 +1,11 @@
+[package]
+name = "git-up"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+
+[dependencies]
+git-utils = { path = "../git-utils" }
+env_logger.workspace = true
+git2.workspace = true
+log.workspace = true

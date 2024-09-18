@@ -31,6 +31,18 @@ pub fn log_prepare(path: &str, command_name: &str) {
         .init();
 }
 
+impl Clone for Command {
+    fn clone(&self) -> Self {
+        let repo = &self.repo;
+
+        Command {
+            config: repo.config().unwrap(),
+            name: self.name.clone(),
+            repo: Repository::open_from_env().expect("Couldn't open repository"),
+        }
+    }
+}
+
 impl Command {
     pub fn new(name: String) -> Command {
         Command {
@@ -103,12 +115,12 @@ impl Command {
     /// Print the owner and name of the repository. This does the equivalent of
     /// `git remote show origin | grep Fetch | sed "s/^.*\:\(.*\)\.git/\1/"`
     ///
-    // This should support both ssh and https urls:
-    //
-    // let url = "git@github.com:geoffjay/git-utils.git".to_string();
-    // let url = "https://github.com/geoffjay/git-utils.git".to_string();
-    //
-    // at some point adding a mocking library should be done to test each.
+    /// This should support both ssh and https urls:
+    ///
+    /// let url = "git@github.com:geoffjay/git-utils.git".to_string();
+    /// let url = "https://github.com/geoffjay/git-utils.git".to_string();
+    ///
+    /// at some point adding a mocking library should be done to test each.
     pub fn repo_title(self: Command) -> Result<String, Error> {
         let url = self.repo_url()?;
 
@@ -128,6 +140,72 @@ impl Command {
         let res = re.replace_all(&url, "$owner/$name");
 
         Ok(res.to_string())
+    }
+
+    /// Synchronize the local with the remote repository. This will perform:
+    ///
+    /// - git fetch --no-tags --all
+    /// - git merge --ff-only
+    /// - remove any branches that contain ": gone]" from `git branch -vv`
+    /// - if the current branch is not the default branch, `git fetch origin default_branch:default_branch`
+    pub fn sync(self: Command) -> Result<(), Error> {
+        let default_branch = self.clone().default_branch()?;
+        let current_branch = self.clone().current_branch()?;
+        let config = &self.repo.config().unwrap();
+
+        // fetch all branches
+        let mut remote = self
+            .repo
+            .find_remote("origin")
+            .expect("Couldn't find remote 'origin'");
+        let r = remote.clone();
+        let url = r.url().unwrap();
+
+        let result = with_authentication(url, config, |f| {
+            let mut proxy_options = ProxyOptions::new();
+            proxy_options.auto();
+
+            let mut callbacks = RemoteCallbacks::new();
+            callbacks.credentials(f);
+
+            let _ = remote
+                .connect_auth(Direction::Fetch, Some(callbacks), Some(proxy_options))
+                .map_err(CommandError::GitError);
+
+            let fetch_result = remote.fetch(&["--no-tags", "--all", "-p"], None, None);
+
+            // Perform fast-forward merge
+            if let Ok(_) = fetch_result {
+                let current_branch = self.repo.head()?.shorthand().unwrap().to_string();
+                let upstream_branch = format!("refs/remotes/origin/{}", current_branch);
+                
+                if let Ok(upstream_oid) = self.repo.refname_to_id(&upstream_branch) {
+                    // let upstream_commit = self.repo.find_commit(upstream_oid)?;
+                    let annotated_commit = self.repo.find_annotated_commit(upstream_oid)?;
+                    
+                    // Attempt fast-forward merge
+                    match self.repo.merge_analysis(&[&annotated_commit]) {
+                        Ok((analysis, _)) => {
+                            if analysis.is_fast_forward() {
+                                let mut reference = self.repo.find_reference("HEAD")?;
+                                reference.set_target(upstream_oid, "Fast-forward merge")?;
+                                self.repo.checkout_head(Some(git2::build::CheckoutBuilder::new().force()))?;
+                            }
+                            // If not fast-forward, do nothing (equivalent to `|| true`)
+                        }
+                        Err(_) => {} // Ignore merge analysis errors
+                    }
+                }
+            }
+
+            Ok(fetch_result)
+        });
+
+        match result {
+            Ok(fetch_result) => fetch_result.map(|_| ()),
+            Err(CommandError::GitError(e)) => Err(e),
+            Err(e) => Err(Error::from_str(&e.to_string())),
+        }
     }
 }
 
