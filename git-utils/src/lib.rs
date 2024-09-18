@@ -149,8 +149,8 @@ impl Command {
     /// - remove any branches that contain ": gone]" from `git branch -vv`
     /// - if the current branch is not the default branch, `git fetch origin default_branch:default_branch`
     pub fn sync(self: Command) -> Result<(), Error> {
-        let default_branch = self.clone().default_branch()?;
-        let current_branch = self.clone().current_branch()?;
+        // let default_branch = self.clone().default_branch()?;
+        // let current_branch = self.clone().current_branch()?;
         let config = &self.repo.config().unwrap();
 
         // fetch all branches
@@ -161,6 +161,8 @@ impl Command {
         let r = remote.clone();
         let url = r.url().unwrap();
 
+        log::debug!("fetching from {}", url);
+
         let result = with_authentication(url, config, |f| {
             let mut proxy_options = ProxyOptions::new();
             proxy_options.auto();
@@ -168,43 +170,47 @@ impl Command {
             let mut callbacks = RemoteCallbacks::new();
             callbacks.credentials(f);
 
-            let _ = remote
-                .connect_auth(Direction::Fetch, Some(callbacks), Some(proxy_options))
-                .map_err(CommandError::GitError);
+            log::debug!("connecting to remote");
 
-            let fetch_result = remote.fetch(&["--no-tags", "--all", "-p"], None, None);
+            let mut fetch_options = git2::FetchOptions::new();
+            fetch_options.remote_callbacks(callbacks)
+                .proxy_options(proxy_options);
+
+            log::debug!("fetching from remote");
+
+            let fetch_result = remote.fetch(&["--no-tags", "--all", "-p"], Some(&mut fetch_options), None)?;
+
+            log::debug!("fetch result: {:?}", fetch_result);
 
             // Perform fast-forward merge
-            if let Ok(_) = fetch_result {
-                let current_branch = self.repo.head()?.shorthand().unwrap().to_string();
-                let upstream_branch = format!("refs/remotes/origin/{}", current_branch);
-                
-                if let Ok(upstream_oid) = self.repo.refname_to_id(&upstream_branch) {
-                    // let upstream_commit = self.repo.find_commit(upstream_oid)?;
-                    let annotated_commit = self.repo.find_annotated_commit(upstream_oid)?;
-                    
-                    // Attempt fast-forward merge
-                    match self.repo.merge_analysis(&[&annotated_commit]) {
-                        Ok((analysis, _)) => {
-                            if analysis.is_fast_forward() {
-                                let mut reference = self.repo.find_reference("HEAD")?;
-                                reference.set_target(upstream_oid, "Fast-forward merge")?;
-                                self.repo.checkout_head(Some(git2::build::CheckoutBuilder::new().force()))?;
-                            }
-                            // If not fast-forward, do nothing (equivalent to `|| true`)
+            let current_branch = self.repo.head()?.shorthand().unwrap().to_string();
+            let upstream_branch = format!("refs/remotes/origin/{}", current_branch);
+
+            log::debug!("upstream branch: {}", upstream_branch);
+
+            if let Ok(upstream_oid) = self.repo.refname_to_id(&upstream_branch) {
+                // let upstream_commit = self.repo.find_commit(upstream_oid)?;
+                let annotated_commit = self.repo.find_annotated_commit(upstream_oid)?;
+                // Attempt fast-forward merge
+                match self.repo.merge_analysis(&[&annotated_commit]) {
+                    Ok((analysis, _)) => {
+                        if analysis.is_fast_forward() {
+                            let mut reference = self.repo.find_reference("HEAD")?;
+                            reference.set_target(upstream_oid, "Fast-forward merge")?;
+                            self.repo.checkout_head(Some(git2::build::CheckoutBuilder::new().force()))?;
                         }
-                        Err(_) => {} // Ignore merge analysis errors
+                        // If not fast-forward, do nothing (equivalent to `|| true`)
                     }
+                    Err(_) => {} // Ignore merge analysis errors
                 }
             }
 
-            Ok(fetch_result)
+            Ok(())
         });
 
         match result {
-            Ok(fetch_result) => fetch_result.map(|_| ()),
+            Ok(_) => Ok(()),
             Err(CommandError::GitError(e)) => Err(e),
-            Err(e) => Err(Error::from_str(&e.to_string())),
         }
     }
 }
