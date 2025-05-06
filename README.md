@@ -54,30 +54,50 @@ Synchronizes the local with remote and cleans up branches that have been removed
 
 #### macOS
 
-Currently there are only builds in the release for x86_64, aarch64 is planned.
+Currently there are builds in the release for x86_64 and aarch64.
 
 This assumes that `~/.local/bin` exists, is in your `PATH`, and is where you
 want them to go. Adjust the command for your environment if this is not what's
 desired.
 
+##### Intel
+
 ```shell
-curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.2-darwin-x86_64.tar.gz
-tar -xf git-utils-v0.1.2-darwin-x86_64.tar.gz -C ~/.local/bin
-rm git-utils-v0.1.2-darwin-x86_64.tar.gz
+curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.3-darwin-x86_64.tar.gz
+tar -xf git-utils-v0.1.3-darwin-x86_64.tar.gz -C ~/.local/bin
+rm git-utils-v0.1.3-darwin-x86_64.tar.gz
+```
+
+##### Aarch64
+
+```shell
+curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.3-darwin-aarch64.tar.gz
+tar -xf git-utils-v0.1.3-darwin-aarch64.tar.gz -C ~/.local/bin
+rm git-utils-v0.1.3-darwin-aarch64.tar.gz
 ```
 
 #### Linux
 
-Currently there are only builds in the release for x86_64, arm64 is planned.
+Currently there are builds in the release for x86_64 and arm64.
 
 This assumes that `~/.local/bin` exists, is in your `PATH`, and is where you
 want them to go. Adjust the command for your environment if this is not what's
 desired.
 
+##### Intel
+
 ```shell
-curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.2-linux-x86_64.tar.gz
-tar -xf git-utils-v0.1.2-darwin-x86_64.tar.gz -C ~/.local/bin
-rm git-utils-v0.1.2-linux-x86_64.tar.gz
+curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.3-linux-x86_64.tar.gz
+tar -xf git-utils-v0.1.3-darwin-x86_64.tar.gz -C ~/.local/bin
+rm git-utils-v0.1.3-linux-x86_64.tar.gz
+```
+
+##### ARM64
+
+```shell
+curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.3-linux-amd64.tar.gz
+tar -xf git-utils-v0.1.3-darwin-amd64.tar.gz -C ~/.local/bin
+rm git-utils-v0.1.3-linux-amd64.tar.gz
 ```
 
 #### Windows
