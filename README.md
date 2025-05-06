@@ -46,6 +46,10 @@ Prints the repository, eg. `geoffjay/git-utils`.
 
 Prints the full repository url, eg. `git@github.com:geoffjay/git-utils`.
 
+#### `git-sync`
+
+Synchronizes the local with remote and cleans up branches that have been removed.
+
 ### Installation
 
 #### macOS
@@ -57,9 +61,9 @@ want them to go. Adjust the command for your environment if this is not what's
 desired.
 
 ```shell
-curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.1-darwin-x86_64.tar.gz
-tar -xf git-utils-v0.1.1-darwin-x86_64.tar.gz -C ~/.local/bin
-rm git-utils-v0.1.1-darwin-x86_64.tar.gz
+curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.2-darwin-x86_64.tar.gz
+tar -xf git-utils-v0.1.2-darwin-x86_64.tar.gz -C ~/.local/bin
+rm git-utils-v0.1.2-darwin-x86_64.tar.gz
 ```
 
 #### Linux
@@ -71,9 +75,9 @@ want them to go. Adjust the command for your environment if this is not what's
 desired.
 
 ```shell
-curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.1-linux-x86_64.tar.gz
-tar -xf git-utils-v0.1.1-darwin-x86_64.tar.gz -C ~/.local/bin
-rm git-utils-v0.1.1-linux-x86_64.tar.gz
+curl -LO https://github.com/geoffjay/git-utils/releases/latest/download/git-utils-v0.1.2-linux-x86_64.tar.gz
+tar -xf git-utils-v0.1.2-darwin-x86_64.tar.gz -C ~/.local/bin
+rm git-utils-v0.1.2-linux-x86_64.tar.gz
 ```
 
 #### Windows

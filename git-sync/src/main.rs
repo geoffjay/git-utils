@@ -3,8 +3,8 @@ use log::{debug, error};
 use git_utils::{log_prepare, Command};
 
 fn main() {
-    log_prepare(module_path!(), "git-up");
-    let command = Command::new("git-up".to_string());
+    log_prepare(module_path!(), "git-sync");
+    let command = Command::new("git-sync".to_string());
 
     match command.sync() {
         Ok(_) => (),

@@ -5,18 +5,18 @@ members = [
   "git-default-branch",
   "git-repo-title",
   "git-repo-url",
-  "git-up",
+  "git-sync",
 ]
 resolver = "2"
 
 [workspace.package]
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Geoff Johnson <geoff.jay@gmail.com>"]
 edition = "2021"
 
 [workspace.dependencies]
-env_logger = "0.10"
-git2 = "0.19"
+env_logger = "0.11.8"
+git2 = "0.20"
 log = "0.4"
 
 [profile.release]
