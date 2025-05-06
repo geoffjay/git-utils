@@ -17,8 +17,18 @@ jobs:
         include:
           - os: ubuntu-latest
             asset_name: git-utils-${{ github.ref_name }}-linux-x86_64.tar.gz
+            arch: x86_64
+          - os: ubuntu-latest
+            asset_name: git-utils-${{ github.ref_name }}-linux-arm64.tar.gz
+            arch: aarch64
+            target: aarch64-unknown-linux-gnu
           - os: macos-latest
             asset_name: git-utils-${{ github.ref_name }}-darwin-x86_64.tar.gz
+            arch: x86_64
+          - os: macos-latest
+            asset_name: git-utils-${{ github.ref_name }}-darwin-arm64.tar.gz
+            arch: aarch64
+            target: aarch64-apple-darwin
           - os: windows-latest
             asset_name: git-utils-${{ github.ref_name }}-windows-x86_64.zip
 
@@ -31,16 +41,24 @@ jobs:
           key: ${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
 
       - name: Install Rust (linux)
-        if: matrix.os == 'linux-latest'
+        if: matrix.os == 'ubuntu-latest'
         run: |
           rustup update stable
           rustup default stable
+          if [[ "${{ matrix.arch }}" == "aarch64" ]]; then
+            rustup target add aarch64-unknown-linux-gnu
+            sudo apt-get update
+            sudo apt-get install -y gcc-aarch64-linux-gnu
+          fi
 
       - name: Install Rust (macos)
         if: matrix.os == 'macos-latest'
         run: |
           curl https://sh.rustup.rs | sh -s -- -y
           echo "{:$HOME/.cargo/bin}" >> $GITHUB_PATH
+          if [[ "${{ matrix.arch }}" == "aarch64" ]]; then
+            rustup target add aarch64-apple-darwin
+          fi
 
       - name: Install Rust (windows)
         if: matrix.os == 'windows-latest'
@@ -50,7 +68,7 @@ jobs:
           rustup toolchain install nightly
 
       - name: Build
-        if: matrix.os != 'windows-latest'
+        if: (matrix.os == 'ubuntu-latest' && matrix.arch == 'x86_64') || (matrix.os == 'macos-latest' && matrix.arch == 'x86_64')
         run: |
           cargo build --verbose --release
           strip target/release/git-default-branch
@@ -59,6 +77,42 @@ jobs:
           strip target/release/git-repo-url
           strip target/release/git-sync
           tar -czvf ${{ matrix.asset_name }} -C target/release \
+            git-current-branch \
+            git-default-branch \
+            git-repo-title \
+            git-repo-url \
+            git-sync
+
+      - name: Build (linux-arm64)
+        if: matrix.os == 'ubuntu-latest' && matrix.arch == 'aarch64'
+        run: |
+          # Configure cross-compilation
+          echo '[target.aarch64-unknown-linux-gnu]' >> ~/.cargo/config
+          echo 'linker = "aarch64-linux-gnu-gcc"' >> ~/.cargo/config
+          
+          cargo build --verbose --release --target ${{ matrix.target }}
+          aarch64-linux-gnu-strip target/${{ matrix.target }}/release/git-default-branch
+          aarch64-linux-gnu-strip target/${{ matrix.target }}/release/git-current-branch
+          aarch64-linux-gnu-strip target/${{ matrix.target }}/release/git-repo-title
+          aarch64-linux-gnu-strip target/${{ matrix.target }}/release/git-repo-url
+          aarch64-linux-gnu-strip target/${{ matrix.target }}/release/git-sync
+          tar -czvf ${{ matrix.asset_name }} -C target/${{ matrix.target }}/release \
+            git-current-branch \
+            git-default-branch \
+            git-repo-title \
+            git-repo-url \
+            git-sync
+
+      - name: Build (macos-arm64)
+        if: matrix.os == 'macos-latest' && matrix.arch == 'aarch64'
+        run: |
+          cargo build --verbose --release --target ${{ matrix.target }}
+          strip target/${{ matrix.target }}/release/git-default-branch
+          strip target/${{ matrix.target }}/release/git-current-branch
+          strip target/${{ matrix.target }}/release/git-repo-title
+          strip target/${{ matrix.target }}/release/git-repo-url
+          strip target/${{ matrix.target }}/release/git-sync
+          tar -czvf ${{ matrix.asset_name }} -C target/${{ matrix.target }}/release \
             git-current-branch \
             git-default-branch \
             git-repo-title \
