@@ -172,12 +172,17 @@ impl Command {
 
             log::debug!("connecting to remote");
             let mut fetch_options = git2::FetchOptions::new();
-            fetch_options.remote_callbacks(callbacks)
+            fetch_options
+                .remote_callbacks(callbacks)
                 .proxy_options(proxy_options);
 
             log::debug!("fetching from remote");
             // equivalent to: x-fetch-all = fetch --no-tags --all -p
-            let fetch_result = remote.fetch(&["--no-tags", "--all", "-p"], Some(&mut fetch_options), None)?;
+            let fetch_result = remote.fetch(
+                &["--no-tags", "--all", "-p"],
+                Some(&mut fetch_options),
+                None,
+            )?;
             log::debug!("fetch result: {:?}", fetch_result);
 
             // Perform fast-forward merge
@@ -195,7 +200,8 @@ impl Command {
                         if analysis.is_fast_forward() {
                             let mut reference = self.repo.find_reference("HEAD")?;
                             reference.set_target(upstream_oid, "Fast-forward merge")?;
-                            self.repo.checkout_head(Some(git2::build::CheckoutBuilder::new().force()))?;
+                            self.repo
+                                .checkout_head(Some(git2::build::CheckoutBuilder::new().force()))?;
                         }
                         // If not fast-forward, do nothing (equivalent to `|| true`)
                     }
@@ -210,17 +216,17 @@ impl Command {
             for branch_result in branches {
                 let (mut branch, _) = branch_result?;
                 let branch_name = branch.name()?.unwrap_or("").to_string();
-                
+
                 // Skip the current branch
                 if branch_name == current_branch {
                     continue;
                 }
-                
+
                 let upstream = match branch.upstream() {
                     Ok(_) => true,
                     Err(_) => false,
                 };
-                
+
                 // If upstream doesn't exist (which means it's "gone"), delete the branch
                 if !upstream {
                     log::debug!("removing branch {}", branch_name);
@@ -236,26 +242,27 @@ impl Command {
         // equivalent to: if [ "$current" != "$default" ]; then git x-fetch-branch $default; fi;
         if result.is_ok() && current_branch != default_branch {
             log::debug!("fetching default branch: {}", default_branch);
-            
+
             // Create a new authentication call to fetch the default branch
             let default_branch_result = with_authentication(url, config, |f| {
                 let mut callbacks = RemoteCallbacks::new();
                 callbacks.credentials(f);
-                
+
                 let mut proxy_options = ProxyOptions::new();
                 proxy_options.auto();
-                
+
                 let mut fetch_options = git2::FetchOptions::new();
-                fetch_options.remote_callbacks(callbacks)
+                fetch_options
+                    .remote_callbacks(callbacks)
                     .proxy_options(proxy_options);
-                
+
                 let refspec = format!("{}:{}", default_branch, default_branch);
                 log::debug!("refspec: {}", refspec);
-                
+
                 let fetch_result = remote.fetch(&[&refspec], Some(&mut fetch_options), None)?;
                 Ok(fetch_result)
             });
-            
+
             if let Err(CommandError::GitError(e)) = default_branch_result {
                 return Err(e);
             }
