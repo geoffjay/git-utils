@@ -57,11 +57,13 @@ jobs:
           strip target/release/git-current-branch
           strip target/release/git-repo-title
           strip target/release/git-repo-url
+          strip target/release/git-sync
           tar -czvf ${{ matrix.asset_name }} -C target/release \
             git-current-branch \
             git-default-branch \
             git-repo-title \
-            git-repo-url
+            git-repo-url \
+            git-sync
 
       - name: Build (windows)
         if: matrix.os == 'windows-latest'
